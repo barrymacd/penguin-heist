@@ -103,6 +103,9 @@ label.f{display:grid;gap:6px;font-weight:700}
 @media(max-width:480px){.two{grid-template-columns:1fr}.row{grid-template-columns:28px minmax(0,1fr) auto;padding:10px 12px;gap:8px}.pts{font-size:24px}.prow{grid-template-columns:1fr 1fr}.prow span{grid-column:1/-1}}
 
 [hidden]{display:none!important}
+.kid{display:flex;gap:10px;align-items:flex-start;border:2px solid var(--line);border-radius:14px;padding:12px;cursor:pointer;font-size:15px}
+.kid:has(input:checked){border-color:var(--green);background:light-dark(#e9f7ef,#12301f)}
+.kid input{width:22px;height:22px;min-height:0;flex:none;margin-top:2px;accent-color:var(--green)}
 .gate{position:fixed;inset:0;z-index:20;background:linear-gradient(var(--sky1),var(--sky2));display:grid;place-items:center;padding:16px}
 .gate[hidden]{display:none}
 .gcard{background:var(--bg);border-radius:24px;padding:28px;width:min(420px,100%);display:grid;gap:14px;justify-items:start;box-shadow:0 10px 40px rgba(20,40,70,.15)}
@@ -195,7 +198,7 @@ label.f{display:grid;gap:6px;font-weight:700}
   <h2>House rules</h2>
   <div class="rules">
     <div class="rule"><h3>Scoring</h3><ul>
-      <li>Steal: <b>+3</b></li>
+      <li>Steal: <b>+3</b>. A kid must be on every steal. No parent-only missions.</li>
       <li>Yard photo: <b>+1</b>, once per date, only while you hold it. Steal at 11pm, snap another at 12:01am, and that's +4.</li>
       <li>Caught in the act: raiders <b>−2</b>. No points for the catch.</li>
       <li>Every point needs a photo. Caught teams, be good sports and pose.</li>
@@ -221,7 +224,7 @@ label.f{display:grid;gap:6px;font-weight:700}
     <div id="plist"></div>
     <form class="addf" id="gpwForm" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="f" style="flex:1 1 200px">Change game password<input id="gpwNew" autocapitalize="none"></label><button class="btn small" type="submit">Save</button></form>
   </div>
-  <p class="note" style="margin-top:12px">Times use Central time. · v2.1 · <button class="linkbtn" id="ownerOpen">Game owner</button> · <button class="linkbtn" id="signOut">Sign this phone out</button></p>
+  <p class="note" style="margin-top:12px">Times use Central time. · v2.2 · <button class="linkbtn" id="ownerOpen">Game owner</button> · <button class="linkbtn" id="signOut">Sign this phone out</button></p>
 </div></section>
 
 <div class="ov" id="ov" role="dialog" aria-modal="true" aria-labelledby="logTitle">
@@ -242,6 +245,7 @@ label.f{display:grid;gap:6px;font-weight:700}
       </div>
       <label class="f">Other family<select id="other"></select></label>
     </div>
+    <label class="kid" id="kidWrap"><input type="checkbox" id="kid"><span><b>A kid was on this mission</b> and is in the photo. No parent-only steals.</span></label>
     <label class="f">Photo (required)<input type="file" id="photo" accept="image/*"></label>
     <img class="prev" id="prev" alt="Photo preview">
     <label class="f">Note (optional)<textarea id="noteIn" rows="2" maxlength="200" placeholder="Snuck in during halftime"></textarea></label>
@@ -476,6 +480,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});
 const type=()=>document.querySelector('input[name=type]:checked').value;
 function syncForm(){
   $('#fCaught').style.display=type()==='caught'?'grid':'none';
+  $('#kidWrap').hidden=type()!=='steal';
   $('#forPick').hidden=!isAdmin();$('#forFixed').hidden=isAdmin();
   const mt=myTeam();$('#forBox').innerHTML=mt?`${avatar(tById(mt)?.avatar,30)}${esc(tName(mt))}`:'No family yet';
 }
@@ -531,10 +536,11 @@ async function shrink(file,max,q){
 $('#logForm').addEventListener('submit',async e=>{
   e.preventDefault();const t=type(),f=$('#photo').files[0];
   if(!f){$('#err').textContent='Add a photo. Every point needs proof.';return}
+  if(t==='steal'&&!$('#kid').checked){$('#err').textContent='A kid has to be on every steal. No parent-only missions.';return}
   const btn=$('#sendBtn');btn.disabled=true;btn.textContent='Posting…';$('#err').textContent='';
   try{
     let data=await shrink(f,900,.72);if(data.length>300000)data=await shrink(f,640,.6);
-    const common={p_game:game,p_type:t,p_other:t==='caught'?$('#other').value:null,p_role:document.querySelector('input[name=role]:checked').value,p_note:$('#noteIn').value,p_photo:data};
+    const common={p_game:game,p_type:t,p_other:t==='caught'?$('#other').value:null,p_role:document.querySelector('input[name=role]:checked').value,p_note:$('#noteIn').value,p_photo:data,p_kid:t==='steal'&&$('#kid').checked};
     const id=isAdmin()?await rpc('admin_post_log',{...common,p_admin:admin,p_team:$('#team').value}):await rpc('post_log',{...common,p_token:token});
     if(id)photos.set(id,data);
     closeAll();$('#logForm').reset();$('#prev').style.display='none';syncForm();refresh();
