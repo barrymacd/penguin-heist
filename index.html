@@ -130,7 +130,7 @@ label.f{display:grid;gap:6px;font-weight:700}
 <div class="ownerbar" id="ownerBar" hidden>Owner mode is on · <button id="ownerOff">Turn off</button></div>
 <header class="band top"><div class="wrap">
   <h1>The Great Penguin Heist</h1>
-  <p class="sub">Steal it, show it off, and hold the most points by New Year's Day.</p>
+  <p class="sub">Steal it, show it off, and have the most points by noon on Jan 31.</p>
   <div class="banner" id="banner"></div>
 </div></header>
 
@@ -212,7 +212,8 @@ label.f{display:grid;gap:6px;font-weight:700}
       <li>No steal hours otherwise. Steals are open any time.</li>
       <li>No steal-backs: if your penguin gets stolen, you can't take it back from that family on the steal date or the next date. Stolen on the 5th means you can steal it back starting 12:00am on the 7th. If another family steals it first, you're free to go after them.</li>
       <li>Christmas freeze: no stealing from 10pm Christmas Eve to 6am Dec 26.</li>
-      <li>The game ends at the end of New Year's Day.</li></ul></div>
+      <li>The game starts Nov 30 when the starting family posts the first yard photo. No steals before then.</li>
+      <li>The game ends at 12:00 noon on Jan 31.</li></ul></div>
   </div>
 </div></section>
 
@@ -224,7 +225,7 @@ label.f{display:grid;gap:6px;font-weight:700}
     <div id="plist"></div>
     <form class="addf" id="gpwForm" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="f" style="flex:1 1 200px">Change game password<input id="gpwNew" autocapitalize="none"></label><button class="btn small" type="submit">Save</button></form>
   </div>
-  <p class="note" style="margin-top:12px">Times use Central time. · v2.2 · <button class="linkbtn" id="ownerOpen">Game owner</button> · <button class="linkbtn" id="signOut">Sign this phone out</button></p>
+  <p class="note" style="margin-top:12px">Times use Central time. · v2.3 · <button class="linkbtn" id="ownerOpen">Game owner</button> · <button class="linkbtn" id="signOut">Sign this phone out</button></p>
 </div></section>
 
 <div class="ov" id="ov" role="dialog" aria-modal="true" aria-labelledby="logTitle">
@@ -305,7 +306,8 @@ const TZ='America/Chicago';
 const PTS={steal:3,daily:1,raider:-2};
 const FREEZE_START=Date.parse('2026-12-25T04:00:00Z'); // Dec 24 10pm CST
 const FREEZE_END=Date.parse('2026-12-26T12:00:00Z');   // Dec 26 6am CST
-const GAME_END=Date.parse('2027-01-02T06:00:00Z');     // end of Jan 1 CST
+const GAME_OPEN=Date.parse('2026-11-30T06:00:00Z');    // Nov 30 12am CST; play starts with the first yard photo after this
+const GAME_END=Date.parse('2027-01-31T18:00:00Z');     // Jan 31 12pm CST
 const AV={
  penguin:['Penguin','#dff0ff','<ellipse cx="32" cy="38" rx="15" ry="19" fill="#1d2733"/><ellipse cx="32" cy="42" rx="10" ry="14" fill="#fff"/><circle cx="27" cy="30" r="2.5" fill="#fff"/><circle cx="37" cy="30" r="2.5" fill="#fff"/><circle cx="27.5" cy="30.5" r="1.2"/><circle cx="36.5" cy="30.5" r="1.2"/><path d="M29 34h6l-3 4z" fill="#f28c28"/><path d="M19 22q13-16 26 0z" fill="#d7263d"/><rect x="18" y="20" width="28" height="5" rx="2.5" fill="#fff"/>'],
  snowman:['Snowman','#e6f3ff','<circle cx="32" cy="44" r="13" fill="#fff" stroke="#c9d8e8"/><circle cx="32" cy="25" r="9" fill="#fff" stroke="#c9d8e8"/><rect x="24" y="11" width="16" height="9" fill="#1b2230"/><rect x="21" y="19" width="22" height="3" fill="#1b2230"/><circle cx="29" cy="24" r="1.3"/><circle cx="35" cy="24" r="1.3"/><path d="M32 27l7 2-7 1z" fill="#f28c28"/><path d="M23 33h18v4H23z" fill="#d7263d"/><circle cx="32" cy="42" r="1.4"/><circle cx="32" cy="48" r="1.4"/>'],
@@ -349,15 +351,17 @@ function compute(){
   const s={};teams.forEach(t=>s[t.id]={pts:0,steals:0,daily:0,catches:0,caught:0,hold:0});
   const asc=[...logs].sort((a,b)=>a.seq-b.seq),end=Math.min(now(),GAME_END);
   let holder=null,since=0,lock=null;
+  const first=asc.find(l=>l.type==='daily'&&l.at>=GAME_OPEN),startAt=first?first.at:null;
+  const addHold=(team,a,b)=>{if(startAt==null||!s[team])return;const x=Math.max(a,startAt),y=Math.min(b,end);if(y>x)s[team].hold+=y-x};
   for(const l of asc){
     const S=s[l.team_id],R=s[l.raider_id];
     if(l.type==='steal'&&S){S.pts+=PTS.steal;S.steals++}
     if(l.type==='daily'&&S){S.pts+=PTS.daily;S.daily++}
     if(l.type==='caught'){if(S)S.catches++;if(R){R.pts+=PTS.raider;R.caught++}}
-    if(l.type==='steal'||l.type==='start'){if(holder&&s[holder])s[holder].hold+=Math.max(0,Math.min(l.at,end)-since);lock=(l.type==='steal'&&holder&&holder!==l.team_id)?{victim:holder,thief:l.team_id,until:unlockAt(l.at)}:null;holder=l.team_id;since=l.at}
+    if(l.type==='steal'||l.type==='start'){if(holder)addHold(holder,since,l.at);lock=(l.type==='steal'&&holder&&holder!==l.team_id)?{victim:holder,thief:l.team_id,until:unlockAt(l.at)}:null;holder=l.team_id;since=l.at}
   }
-  if(holder&&s[holder])s[holder].hold+=Math.max(0,end-since);
-  return {s,holder,since,lock};
+  if(holder)addHold(holder,since,end);
+  return {s,holder,since,lock,startAt};
 }
 
 function fitSign(name){
@@ -376,14 +380,16 @@ function fitSign(name){
 }
 
 function renderStatus(){
-  const {holder,since,lock}=compute(),n=now(),t=tById(holder);
+  const {holder,since,lock,startAt}=compute(),n=now(),t=tById(holder);
   $('#holder').textContent=holder?tName(holder):'Nobody yet';
   $('#holderAv').innerHTML=holder?avatar(t?.avatar,52):'';
   $('#holderAddr').innerHTML=t&&t.address?`${esc(t.address)} · <a href="${esc(mapUrl(t.address))}" target="_blank" rel="noopener">Directions</a>`:'';
   fitSign(holder?tName(holder):'Nobody yet');
-  $('#held').textContent=holder?`Held for ${dur(Math.min(n,GAME_END)-since)} · since ${when(since)}`:'Waiting for the starting yard or the first steal.';
+  $('#held').textContent=!holder?'Waiting for the starting yard.':startAt==null?'Play starts when the first yard photo is posted on or after Nov 30.':`Held for ${dur(Math.min(n,GAME_END)-Math.max(since,startAt))} · since ${when(Math.max(since,startAt))}`;
   const ph=$('#phase');ph.className='chip';let p;
-  if(n<FREEZE_START)p=`Open season · Christmas freeze in ${dur(FREEZE_START-n)}`;
+  if(n<GAME_OPEN)p=`Game starts Nov 30 · in ${dur(GAME_OPEN-n)}`;
+  else if(startAt==null&&n<GAME_END)p='Starts with the first yard photo · no steals yet';
+  else if(n<FREEZE_START)p=`Open season · Christmas freeze in ${dur(FREEZE_START-n)}`;
   else if(n<FREEZE_END){ph.classList.add('freeze');p='Christmas freeze · no steals until Dec 26, 6am'}
   else if(n<GAME_END)p=`Open season · game ends in ${dur(GAME_END-n)}`;
   else{ph.classList.add('over');p='Game over · final standings'}
