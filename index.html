@@ -216,7 +216,7 @@ label.f{display:grid;gap:6px;font-weight:700}
   <h2>Rules</h2>
   <div class="rules">
     <div class="rule"><h3>Scoring</h3><ul>
-      <li>Steal: <b>+3</b>. A kid must be on every steal. No parent-only missions.</li>
+      <li>Steal: <b>+3</b>. A 7th grader must be present on every raid.</li>
       <li>Yard photo: <b>+1</b>, once per date, only while you hold it. Example: steal at 11pm, snap another at 12:01am, and that's +4.</li>
       <li>Caught in the act: raiders <b>−2</b>. No points for the catch.</li>
       <li>Every point needs a photo. Caught teams, be good sports and pose.</li>
@@ -244,7 +244,7 @@ label.f{display:grid;gap:6px;font-weight:700}
     <div id="plist"></div>
     <form class="addf" id="gpwForm" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="f" style="flex:1 1 200px">Change game password<input id="gpwNew" autocapitalize="none"></label><button class="btn small" type="submit">Save</button></form>
   </div>
-  <p class="note" style="margin-top:12px">Times use Central time. · v2.7 · <button class="linkbtn" id="ownerOpen">Game owner</button> · <button class="linkbtn" id="signOut">Sign this phone out</button></p>
+  <p class="note" style="margin-top:12px">Times use Central time. · v2.8 · <button class="linkbtn" id="ownerOpen">Game owner</button> · <button class="linkbtn" id="signOut">Sign this phone out</button></p>
 </div></section>
 
 <div class="ov" id="ov" role="dialog" aria-modal="true" aria-labelledby="logTitle">
@@ -265,7 +265,7 @@ label.f{display:grid;gap:6px;font-weight:700}
       </div>
       <label class="f">Other family<select id="other"></select></label>
     </div>
-    <label class="kid" id="kidWrap"><input type="checkbox" id="kid"><span><b>A kid was on this mission.</b> No parent-only steals.</span></label>
+    <label class="kid" id="kidWrap"><input type="checkbox" id="kid"><span><b>A 7th grader was on this raid.</b></span></label>
     <label class="f">Photo (required)<input type="file" id="photo" accept="image/*"></label>
     <img class="prev" id="prev" alt="Photo preview">
     <label class="f">Note (optional)<textarea id="noteIn" rows="2" maxlength="200" placeholder="Snuck in during halftime"></textarea></label>
@@ -588,7 +588,7 @@ async function shrink(file,max,q){
 $('#logForm').addEventListener('submit',async e=>{
   e.preventDefault();const t=type(),f=$('#photo').files[0];
   if(!f){$('#err').textContent='Add a photo. Every point needs proof.';return}
-  if(t==='steal'&&!$('#kid').checked){$('#err').textContent='A kid has to be on every steal. No parent-only missions.';return}
+  if(t==='steal'&&!$('#kid').checked){$('#err').textContent='A 7th grader has to be on every raid.';return}
   const btn=$('#sendBtn');btn.disabled=true;btn.textContent='Posting…';$('#err').textContent='';
   try{
     let data=await shrink(f,900,.72);if(data.length>300000)data=await shrink(f,640,.6);
