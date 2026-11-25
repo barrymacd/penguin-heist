@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Penguin Heist 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: playful neighborhood rivalry, warm and bright, never dark-mode-AI.
+   IDEA: a front-yard holiday scoreboard, like a hand-lettered yard sign.
+   PICTURE: the inflatable penguin in a snowy yard, sign naming who holds it.
+   COLOUR and TYPE: snow white ground, candy red lead, evergreen support, gold accent; Fredoka + Nunito.
+   LAYOUT: scene + status up top, leaderboard, live feed, rules, families. */
+:root{color-scheme:light dark;
+--bg:light-dark(#ffffff,#101c2e);--ink:light-dark(#1b2230,#f1f5fb);--soft:light-dark(#5b6576,#aab6c8);
+--red:light-dark(#d7263d,#ff5a6e);--redbg:light-dark(#fde8eb,#3a1a24);--green:light-dark(#1f7a4d,#4fc78a);
+--gold:#f2b705;--card:light-dark(#ffffff,#182740);--line:light-dark(#e6e9ef,#26385a);
+--sky1:light-dark(#cfe9ff,#1b3358);--sky2:light-dark(#f4faff,#2a4a75);--snow:light-dark(#ffffff,#e9f1fb)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Nunito,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:Fredoka,Nunito,sans-serif;line-height:1.05;margin:0;text-wrap:balance}
+h1{font-size:clamp(32px,6vw,50px);font-weight:700;color:var(--red)}
+h2{font-size:28px;font-weight:600;margin-bottom:14px}
+h3{font-size:19px;font-weight:600}
+a{color:var(--red);font-weight:700}
+.band{padding:clamp(22px,4vw,48px) max(5vw,16px)}
+.wrap{max-width:1100px;margin:0 auto}
+.top{padding-bottom:8px}.sub{color:var(--soft);margin:6px 0 0;font-weight:600}
+.hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:22px;align-items:stretch}
+.scene{border-radius:24px;overflow:hidden;background:linear-gradient(var(--sky1),var(--sky2));min-height:300px;position:relative;border:1px solid var(--line)}
+.scene svg{display:block;width:100%;height:100%}
+.peng{transform-origin:200px 268px;animation:wob 3.2s ease-in-out infinite}
+@keyframes wob{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+@media(prefers-reduced-motion:reduce){.peng{animation:none}}
+.status{background:var(--redbg);border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:10px}
+.lbl{font-size:14px;font-weight:700;color:var(--soft)}
+.hrow{display:flex;align-items:center;gap:12px}
+.holder{font-family:Fredoka,sans-serif;font-size:clamp(28px,5vw,40px);font-weight:700;color:var(--red);line-height:1.05}
+.held{font-weight:700}
+.chip{display:inline-flex;gap:8px;align-items:center;background:var(--card);border-radius:99px;padding:8px 14px;font-weight:700;font-size:14px;width:fit-content}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--green);flex:none}
+.chip.freeze .dot{background:#2a8fdb}.chip.over .dot{background:var(--gold)}
+.lock{background:var(--card);border:2px dashed var(--line);border-radius:14px;padding:10px 14px;font-weight:600;font-size:15px}
+.lock b{color:var(--red);white-space:nowrap}.lock.me{border-color:var(--red)}
+.btn{font:700 17px Nunito,sans-serif;border:0;border-radius:14px;padding:13px 20px;min-height:48px;cursor:pointer;background:var(--red);color:#fff}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.opt:focus-within,.avopt:focus-within,.jbtn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.btn.small{font-size:14px;min-height:40px;padding:8px 14px}
+.btn[disabled]{opacity:.5;cursor:default}
+.note{font-size:14px;color:var(--soft);margin:0}
+.av{border-radius:50%;flex:none;display:block}
+.board{display:grid;gap:10px}
+.row{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 16px}
+.rank{font:700 24px Fredoka,sans-serif;color:var(--soft);text-align:center}
+.row.first{border:2px solid var(--gold)}.row.first .rank{color:var(--gold)}
+.tn{font-weight:800;font-size:18px;display:flex;align-items:center;gap:10px}
+.stats{font-size:14px;color:var(--soft)}
+.pts{font:700 30px Fredoka,sans-serif;text-align:right;white-space:nowrap}.pts small{font-size:14px;color:var(--soft);margin-left:4px}
+.feed{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.post{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
+.ph{aspect-ratio:4/3;background:var(--sky2);display:grid;place-items:center;color:var(--soft);font-size:14px}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.pb{padding:12px 14px;display:grid;gap:4px}
+.pt{font-weight:800}.badge{font:700 14px Fredoka,sans-serif;border-radius:8px;padding:2px 8px;margin-left:6px;white-space:nowrap}
+.plus{background:#e3f6ec;color:#17643f}.minus{background:#fde8eb;color:#a3172b}.zero{background:#eef1f6;color:#4a5466}
+.meta{font-size:13px;color:var(--soft)}.del{background:none;border:0;color:var(--soft);font:600 13px Nunito;cursor:pointer;padding:6px 0;text-align:left;text-decoration:underline}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.rule{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px}
+.rule h3{margin-bottom:6px;color:var(--green)}.rule ul{margin:0;padding-left:20px}.rule li{margin:3px 0}
+.fams{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.fam{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:8px;align-content:start}
+.fam.mine{border:2px solid var(--green)}
+.addr{font-size:14px}.mem{font-size:14px;color:var(--soft)}
+.fbtns{display:flex;gap:8px;flex-wrap:wrap}
+.players{margin-top:22px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:10px}
+.prow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,180px) auto;gap:8px;align-items:center}
+input,select,textarea{font:16px Nunito,sans-serif;color:var(--ink);background:var(--card);border:2px solid var(--line);border-radius:12px;padding:11px 12px;min-height:46px;width:100%}
+label.f{display:grid;gap:6px;font-weight:700}
+.empty{background:var(--card);border:2px dashed var(--line);border-radius:18px;padding:22px;color:var(--soft);text-align:center}
+.alt{background:light-dark(#f6f9fc,#0c1626)}
+.ov{position:fixed;inset:0;background:rgba(10,20,35,.55);display:none;align-items:flex-end;justify-content:center;z-index:9;padding:12px}
+.ov.on{display:flex}
+.sheet{background:var(--bg);border-radius:22px;width:min(560px,100%);max-height:92vh;overflow:auto;padding:22px;display:grid;gap:14px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.opt{border:2px solid var(--line);border-radius:14px;padding:10px 12px;cursor:pointer;display:grid;gap:2px;position:relative}
+.opt input,.avopt input{position:absolute;opacity:0;width:1px;height:1px}
+.opt b{font-family:Fredoka,sans-serif;font-size:18px}.opt span{font-size:13px;color:var(--soft)}
+.opt:has(input:checked){border-color:var(--red);background:var(--redbg)}
+.avgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:8px}
+.avopt{border:2px solid var(--line);border-radius:14px;padding:8px 4px;cursor:pointer;display:grid;justify-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--soft);position:relative}
+.avopt:has(input:checked){border-color:var(--red);background:var(--redbg);color:var(--ink)}
+.joinlist{display:grid;gap:8px}
+.jbtn{display:flex;align-items:center;gap:12px;text-align:left;font:700 17px Nunito,sans-serif;color:var(--ink);background:var(--card);border:2px solid var(--line);border-radius:14px;padding:10px 14px;cursor:pointer;min-height:56px;width:100%}
+.jbtn.pick{border-color:var(--red);background:var(--redbg)}
+.forbox{display:flex;align-items:center;gap:10px;font-weight:800;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:8px 12px}
+.prev{max-height:220px;border-radius:14px;object-fit:cover;width:100%;display:none}
+.err{color:var(--red);font-weight:700;margin:0;min-height:1em}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.banner{background:var(--redbg);border-radius:14px;padding:12px 16px;font-weight:700;margin-top:12px;display:none}
+@media(max-width:700px){.hero{grid-template-columns:1fr}.scene{min-height:240px}}
+@media(max-width:480px){.two{grid-template-columns:1fr}.row{grid-template-columns:28px minmax(0,1fr) auto;padding:10px 12px;gap:8px}.pts{font-size:24px}.prow{grid-template-columns:1fr 1fr}.prow span{grid-column:1/-1}}
+
+.gate{position:fixed;inset:0;z-index:20;background:linear-gradient(var(--sky1),var(--sky2));display:grid;place-items:center;padding:16px}
+.gate[hidden]{display:none}
+.gcard{background:var(--bg);border-radius:24px;padding:28px;width:min(420px,100%);display:grid;gap:14px;justify-items:start;box-shadow:0 10px 40px rgba(20,40,70,.15)}
+.gcard .btn{width:100%}
+.linkbtn{background:none;border:0;color:var(--soft);font:600 14px Nunito;text-decoration:underline;cursor:pointer;padding:6px 0}
+.ownerbar{background:var(--gold);color:#1b2230;font-weight:800;text-align:center;padding:8px 12px;font-size:14px}
+.ownerbar button{background:none;border:0;font:800 14px Nunito;text-decoration:underline;cursor:pointer;color:#1b2230}
+.jpanel{display:grid;gap:10px;border:2px solid var(--red);border-radius:14px;padding:12px;background:var(--redbg)}
+</style>
+</head>
+<body>
+<div class="gate" id="gate">
+  <form class="gcard" id="gateForm">
+    <div class="tn"><svg class="av" viewBox="0 0 64 64" width="44" height="44" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="#dff0ff"/><ellipse cx="32" cy="38" rx="15" ry="19" fill="#1d2733"/><ellipse cx="32" cy="42" rx="10" ry="14" fill="#fff"/><circle cx="27" cy="30" r="2.5" fill="#fff"/><circle cx="37" cy="30" r="2.5" fill="#fff"/><path d="M29 34h6l-3 4z" fill="#f28c28"/><path d="M19 22q13-16 26 0z" fill="#d7263d"/><rect x="18" y="20" width="28" height="5" rx="2.5" fill="#fff"/></svg><h2 style="margin:0">Penguin Heist</h2></div>
+    <p class="note" style="font-size:16px">Enter the game password to play.</p>
+    <label class="f" style="width:100%">Game password<input id="gatePw" autocomplete="current-password" autocapitalize="none"></label>
+    <p class="err" id="gateErr"></p>
+    <button class="btn" type="submit">Let me in</button>
+  </form>
+</div>
+
+<div class="ownerbar" id="ownerBar" hidden>Owner mode is on · <button id="ownerOff">Turn off</button></div>
+<header class="band top"><div class="wrap">
+  <h1>The Great Penguin Heist</h1>
+  <p class="sub">Steal it, show it off, and hold the most points by New Year's Day.</p>
+  <div class="banner" id="banner"></div>
+</div></header>
+
+<section class="band" style="padding-top:12px"><div class="wrap hero">
+  <div class="scene" aria-label="The inflatable penguin in a snowy front yard">
+    <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMax slice" role="img">
+      <defs>
+        <radialGradient id="sheen" cx=".35" cy=".3" r=".7"><stop offset="0" stop-color="#4a5a70"/><stop offset="1" stop-color="#18212d"/></radialGradient>
+        <radialGradient id="belly" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dfe8f2"/></radialGradient>
+        <g id="tree"><path d="M0-62 22-20H10L28 8H-28L-10-20H-22Z" fill="#1f7a4d"/><path d="M0-62 22-20H10L28 8H0Z" fill="#17643f"/><rect x="-4" y="8" width="8" height="12" fill="#7a4e2d"/></g>
+        <circle id="flake" r="2.2" fill="#fff" opacity=".9"/>
+      </defs>
+      <g opacity=".85"><use href="#flake" x="40" y="30"/><use href="#flake" x="120" y="60"/><use href="#flake" x="300" y="24"/><use href="#flake" x="360" y="80"/><use href="#flake" x="250" y="110"/><use href="#flake" x="70" y="120"/><use href="#flake" x="180" y="20"/><use href="#flake" x="330" y="150"/></g>
+      <path d="M-10 238 Q100 212 200 226 T410 222 V310 H-10Z" fill="var(--snow)"/>
+      <use href="#tree" x="52" y="214"/><use href="#tree" x="350" y="208" transform="translate(350 208) scale(.8) translate(-350 -208)"/>
+      <ellipse cx="200" cy="270" rx="70" ry="10" fill="#9fb6cc" opacity=".45"/>
+      <path d="M232 266 C270 280 300 262 330 276 S380 286 410 280" stroke="#2f7d3a" stroke-width="3" fill="none"/>
+      <g class="peng">
+        <ellipse cx="200" cy="190" rx="58" ry="78" fill="url(#sheen)"/>
+        <ellipse cx="200" cy="205" rx="40" ry="58" fill="url(#belly)"/>
+        <ellipse cx="146" cy="196" rx="12" ry="34" fill="#18212d" transform="rotate(16 146 196)"/>
+        <ellipse cx="254" cy="196" rx="12" ry="34" fill="#18212d" transform="rotate(-16 254 196)"/>
+        <circle cx="184" cy="150" r="8" fill="#fff"/><circle cx="216" cy="150" r="8" fill="#fff"/>
+        <circle cx="186" cy="151" r="4" fill="#111"/><circle cx="214" cy="151" r="4" fill="#111"/>
+        <path d="M190 162 L210 162 L200 176Z" fill="#f28c28"/>
+        <path d="M150 178 Q200 196 250 178 L248 192 Q200 208 152 192Z" fill="#d7263d"/>
+        <path d="M228 190 l10 34 l-14 2 l-6 -32z" fill="#b81d31"/>
+        <path d="M156 122 Q200 52 246 120 Z" fill="#d7263d"/>
+        <path d="M232 98 Q262 92 268 120" stroke="#d7263d" stroke-width="14" fill="none" stroke-linecap="round"/>
+        <circle cx="270" cy="124" r="10" fill="#fff"/>
+        <rect x="150" y="114" width="100" height="16" rx="8" fill="#fff"/>
+        <ellipse cx="180" cy="266" rx="16" ry="6" fill="#f28c28"/><ellipse cx="220" cy="266" rx="16" ry="6" fill="#f28c28"/>
+        <path d="M168 130 Q160 170 170 220" stroke="#fff" stroke-width="5" opacity=".18" fill="none" stroke-linecap="round"/>
+      </g>
+      <rect id="signPost" x="318" y="210" width="5" height="56" fill="#7a4e2d"/>
+      <rect id="signRect" x="272" y="170" width="98" height="40" rx="8" fill="#fff" stroke="#d7263d" stroke-width="3"/>
+      <text x="321" y="182" text-anchor="middle" font-family="Fredoka,sans-serif" font-size="10" fill="#5b6576">Now with</text>
+      <text id="signName" x="321" y="198" text-anchor="middle" font-family="Fredoka,sans-serif" font-weight="700" font-size="14" fill="#d7263d">Nobody yet</text>
+    </svg>
+  </div>
+  <div class="status">
+    <div class="lbl">The penguin is with</div>
+    <div class="hrow"><span id="holderAv"></span><div class="holder" id="holder">Loading…</div></div>
+    <div class="addr" id="holderAddr"></div>
+    <div class="held" id="held"></div>
+    <div class="chip" id="phase"><span class="dot"></span><span id="phaseTxt">Checking the calendar…</span></div>
+    <div class="lock" id="lock" hidden><span id="lockWho"></span><span id="lockTxt"></span><b id="lockLeft"></b><span id="lockAt"></span></div>
+    <div style="flex:1"></div>
+    <button class="btn" id="openLog">Log points</button>
+    <p class="note" id="who"></p>
+  </div>
+</div></section>
+
+<section class="band"><div class="wrap">
+  <h2>Leaderboard</h2>
+  <div class="board" id="board"><div class="empty">Loading families…</div></div>
+</div></section>
+
+<section class="band alt"><div class="wrap">
+  <h2>Heist feed</h2>
+  <div class="feed" id="feed"><div class="empty">No points logged yet.</div></div>
+</div></section>
+
+<section class="band"><div class="wrap">
+  <h2>House rules</h2>
+  <div class="rules">
+    <div class="rule"><h3>Scoring</h3><ul>
+      <li>Steal: <b>+3</b></li>
+      <li>Yard photo: <b>+1</b>, once per date, only while you hold it. Steal at 11pm, snap another at 12:01am, and that's +4.</li>
+      <li>Caught in the act: raiders <b>−2</b>. No points for the catch.</li>
+      <li>Every point needs a photo. Caught teams, be good sports and pose.</li>
+      <li>Each phone joins one family with that family's PIN and can only post for that family.</li></ul></div>
+    <div class="rule"><h3>What counts as caught</h3><ul>
+      <li>Someone from the home is physically outside, sees you and calls you out before you're in the vehicle.</li>
+      <li>If any raider is still outside when they're called out, the whole raid is caught.</li>
+      <li>Tapping on the window doesn't count. Neither does doorbell or security footage.</li></ul></div>
+    <div class="rule"><h3>Display and timing</h3><ul>
+      <li>Front yard, displayed prominently, plugged in, inflated and lit.</li>
+      <li>No steal hours otherwise. Steals are open any time.</li>
+      <li>No steal-backs: if your penguin gets stolen, you can't take it back from that family on the steal date or the next date. Stolen on the 5th means you can steal it back starting 12:00am on the 7th. If another family steals it first, you're free to go after them.</li>
+      <li>Christmas freeze: no stealing from 10pm Christmas Eve to 6am Dec 26.</li>
+      <li>The game ends at the end of New Year's Day.</li></ul></div>
+  </div>
+</div></section>
+
+<section class="band alt"><div class="wrap">
+  <h2>Families</h2>
+  <div class="fams" id="fams"><div class="empty">No families yet.</div></div>
+  <div class="players" id="players" hidden>
+    <h3>Owner tools</h3>
+    <div id="plist"></div>
+    <form class="addf" id="gpwForm" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="f" style="flex:1 1 200px">Change game password<input id="gpwNew" autocapitalize="none"></label><button class="btn small" type="submit">Save</button></form>
+  </div>
+  <p class="note" style="margin-top:12px">Times use Central time. · v2.0 · <button class="linkbtn" id="ownerOpen">Game owner</button> · <button class="linkbtn" id="signOut">Sign this phone out</button></p>
+</div></section>
+
+<div class="ov" id="ov" role="dialog" aria-modal="true" aria-labelledby="logTitle">
+  <form class="sheet" id="logForm">
+    <h2 id="logTitle" style="margin:0">Log points</h2>
+    <div class="opts" id="opts">
+      <label class="opt"><input type="radio" name="type" value="steal" checked><b>Steal +3</b><span>We grabbed it</span></label>
+      <label class="opt"><input type="radio" name="type" value="daily"><b>Yard photo +1</b><span>Once per date</span></label>
+      <label class="opt"><input type="radio" name="type" value="caught"><b>Caught</b><span>A raid got busted</span></label>
+      <label class="opt" id="startOpt" hidden><input type="radio" name="type" value="start"><b>Starting yard</b><span>Where it begins, 0 pts</span></label>
+    </div>
+    <div id="forFixed"><div class="lbl" style="margin-bottom:6px">Posting for</div><div class="forbox" id="forBox"></div></div>
+    <label class="f" id="forPick" hidden>Posting for (owner)<select id="team"></select></label>
+    <div id="fCaught" style="display:none;gap:10px">
+      <div class="opts">
+        <label class="opt"><input type="radio" name="role" value="catch" checked><b>We caught them</b><span>They lose 2</span></label>
+        <label class="opt"><input type="radio" name="role" value="caught"><b>We got caught</b><span>We lose 2</span></label>
+      </div>
+      <label class="f">Other family<select id="other"></select></label>
+    </div>
+    <label class="f">Photo (required)<input type="file" id="photo" accept="image/*"></label>
+    <img class="prev" id="prev" alt="Photo preview">
+    <label class="f">Note (optional)<textarea id="noteIn" rows="2" maxlength="200" placeholder="Snuck in during halftime"></textarea></label>
+    <p class="err" id="err"></p>
+    <div class="fbtns"><button class="btn" id="sendBtn" type="submit">Post it</button><button class="btn ghost" type="button" data-close>Cancel</button></div>
+  </form>
+</div>
+
+<div class="ov" id="ovJoin" role="dialog" aria-modal="true" aria-labelledby="joinTitle">
+  <form class="sheet" id="joinForm">
+    <h2 id="joinTitle" style="margin:0">Join your family</h2>
+    <p class="note">Tap your family and enter its PIN. Whoever registered your family has it.</p>
+    <div class="joinlist" id="joinList"></div>
+    <div class="jpanel" id="jPanel" hidden>
+      <b id="jPick"></b>
+      <label class="f">Family PIN<input id="jPin" inputmode="numeric" autocomplete="off"></label>
+      <label class="f">Your name<input id="jNick" maxlength="30" placeholder="Barry"></label>
+      <button class="btn" type="button" id="jGo">Join</button>
+    </div>
+    <h3 style="margin-top:6px">Or register a new family</h3>
+    <label class="f">Team name<input id="cName" maxlength="40" placeholder="The Flurry Bandits"></label>
+    <div><div class="lbl" style="margin-bottom:6px">Christmas avatar</div><div class="avgrid" id="cAv"></div></div>
+    <label class="f">Home address<input id="cAddr" maxlength="120" placeholder="123 Holly Lane, Nashville" autocomplete="street-address"></label>
+    <label class="f">Family PIN (share it with your family)<input id="cPin" inputmode="numeric" autocomplete="off" placeholder="At least 4 digits"></label>
+    <label class="f">Your name<input id="cNick" maxlength="30" placeholder="Barry"></label>
+    <p class="err" id="jErr"></p>
+    <div class="fbtns"><button class="btn" type="submit">Register and join</button><button class="btn ghost" type="button" data-close>Cancel</button></div>
+  </form>
+</div>
+
+<div class="ov" id="ovEdit" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+  <form class="sheet" id="editForm">
+    <h2 id="editTitle" style="margin:0">Edit family</h2>
+    <label class="f">Team name<input id="eName" maxlength="40"></label>
+    <div><div class="lbl" style="margin-bottom:6px">Christmas avatar</div><div class="avgrid" id="eAv"></div></div>
+    <label class="f">Home address<input id="eAddr" maxlength="120" autocomplete="street-address"></label>
+    <label class="f" id="ePinWrap" hidden>New family PIN (owner, optional)<input id="ePin" inputmode="numeric" autocomplete="off"></label>
+    <p class="err" id="eErr"></p>
+    <div class="fbtns"><button class="btn" type="submit">Save</button><button class="btn ghost" type="button" data-close>Cancel</button></div>
+  </form>
+</div>
+
+<div class="ov" id="ovOwner" role="dialog" aria-modal="true" aria-labelledby="ownTitle">
+  <form class="sheet" id="ownerForm">
+    <h2 id="ownTitle" style="margin:0">Game owner</h2>
+    <p class="note">Owner mode lets you fix posts, move players, reset family PINs and log the starting yard.</p>
+    <label class="f">Owner password<input id="ownPw" autocapitalize="none" autocomplete="off"></label>
+    <p class="err" id="oErr"></p>
+    <div class="fbtns"><button class="btn" type="submit">Turn on owner mode</button><button class="btn ghost" type="button" data-close>Cancel</button></div>
+  </form>
+</div>
+
+<script>
+{
+const SB='https://hvmagjyryzhsratcnqfd.supabase.co',KEY='sb_publishable_Ly4nnkiwEK_IvMengUtjLg_LTiRMzDf';
+const TZ='America/Chicago';
+const PTS={steal:3,daily:1,raider:-2};
+const FREEZE_START=Date.parse('2026-12-25T04:00:00Z'); // Dec 24 10pm CST
+const FREEZE_END=Date.parse('2026-12-26T12:00:00Z');   // Dec 26 6am CST
+const GAME_END=Date.parse('2027-01-02T06:00:00Z');     // end of Jan 1 CST
+const AV={
+ penguin:['Penguin','#dff0ff','<ellipse cx="32" cy="38" rx="15" ry="19" fill="#1d2733"/><ellipse cx="32" cy="42" rx="10" ry="14" fill="#fff"/><circle cx="27" cy="30" r="2.5" fill="#fff"/><circle cx="37" cy="30" r="2.5" fill="#fff"/><circle cx="27.5" cy="30.5" r="1.2"/><circle cx="36.5" cy="30.5" r="1.2"/><path d="M29 34h6l-3 4z" fill="#f28c28"/><path d="M19 22q13-16 26 0z" fill="#d7263d"/><rect x="18" y="20" width="28" height="5" rx="2.5" fill="#fff"/>'],
+ snowman:['Snowman','#e6f3ff','<circle cx="32" cy="44" r="13" fill="#fff" stroke="#c9d8e8"/><circle cx="32" cy="25" r="9" fill="#fff" stroke="#c9d8e8"/><rect x="24" y="11" width="16" height="9" fill="#1b2230"/><rect x="21" y="19" width="22" height="3" fill="#1b2230"/><circle cx="29" cy="24" r="1.3"/><circle cx="35" cy="24" r="1.3"/><path d="M32 27l7 2-7 1z" fill="#f28c28"/><path d="M23 33h18v4H23z" fill="#d7263d"/><circle cx="32" cy="42" r="1.4"/><circle cx="32" cy="48" r="1.4"/>'],
+ reindeer:['Reindeer','#fbeee0','<path d="M22 20l-6-9M22 20l-8-2M42 20l6-9M42 20l8-2" stroke="#7a4e2d" stroke-width="3" stroke-linecap="round"/><ellipse cx="32" cy="35" rx="13" ry="16" fill="#a0673a"/><ellipse cx="32" cy="43" rx="8" ry="7" fill="#d9a776"/><circle cx="27" cy="31" r="2"/><circle cx="37" cy="31" r="2"/><circle cx="32" cy="40" r="4" fill="#d7263d"/>'],
+ gingerbread:['Gingerbread','#fff3e2','<circle cx="32" cy="20" r="9" fill="#c27a3e"/><path d="M22 30h20l8 6-4 4-4-3v13l4 6-5 3-7-8-7 8-5-3 4-6V37l-4 3-4-4z" fill="#c27a3e"/><circle cx="29" cy="19" r="1.4" fill="#fff"/><circle cx="35" cy="19" r="1.4" fill="#fff"/><path d="M28 23q4 3 8 0" stroke="#fff" stroke-width="1.5" fill="none"/><circle cx="32" cy="36" r="1.8" fill="#d7263d"/><circle cx="32" cy="43" r="1.8" fill="#1f7a4d"/>'],
+ tree:['Tree','#e5f6ec','<path d="M32 12l14 20h-6l9 13H15l9-13h-6z" fill="#1f7a4d"/><rect x="29" y="45" width="6" height="7" fill="#7a4e2d"/><path d="M32 6l2 4 4 .5-3 3 .8 4-3.8-2-3.8 2 .8-4-3-3 4-.5z" fill="#f2b705"/><circle cx="27" cy="34" r="2" fill="#d7263d"/><circle cx="37" cy="38" r="2" fill="#f2b705"/><circle cx="33" cy="26" r="2" fill="#2a6fdb"/>'],
+ santa:['Santa hat','#fde8eb','<path d="M14 44q6-30 30-28 6 8 4 18" fill="#d7263d"/><circle cx="49" cy="36" r="5" fill="#fff"/><rect x="11" y="42" width="38" height="9" rx="4.5" fill="#fff"/>'],
+ present:['Present','#fff6d6','<rect x="14" y="26" width="36" height="26" rx="3" fill="#2a6fdb"/><rect x="12" y="20" width="40" height="9" rx="2" fill="#3d82ef"/><rect x="29" y="20" width="6" height="32" fill="#f2b705"/><path d="M32 20q-12-12-12-2 0 4 12 2zM32 20q12-12 12-2 0 4-12 2z" fill="#f2b705"/>'],
+ ornament:['Ornament','#f1e8ff','<rect x="28" y="12" width="8" height="7" rx="1" fill="#c9a227"/><path d="M32 12q-4-6 0-6t0 6" stroke="#c9a227" stroke-width="2" fill="none"/><circle cx="32" cy="37" r="17" fill="#8e44ad"/><path d="M16 34q16 6 32 0" stroke="#f2b705" stroke-width="3" fill="none"/><circle cx="25" cy="30" r="3" fill="#fff" opacity=".5"/>'],
+ candycane:['Candy cane','#ffeef0','<path d="M38 54V22a8 8 0 0 0-16 0" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M38 54V22a8 8 0 0 0-16 0" stroke="#d7263d" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="4 4"/>'],
+ star:['Star','#fff8d9','<path d="M32 10l6.5 13.5 14.5 2-10.5 10 2.5 14.5L32 43l-13 7 2.5-14.5L11 25.5l14.5-2z" fill="#f2b705" stroke="#d9a000" stroke-width="2" stroke-linejoin="round"/>']
+};
+const avatar=(id,s)=>{const a=AV[id]||AV.penguin;return `<svg class="av" viewBox="0 0 64 64" width="${s}" height="${s}" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="${a[1]}"/>${a[2]}</svg>`};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dayFmt=new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit'});
+const dayOf=t=>dayFmt.format(new Date(t));
+const when=t=>new Date(t).toLocaleString('en-US',{timeZone:TZ,month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+const dur=ms=>{const m=Math.max(0,Math.floor(ms/60000)),d=Math.floor(m/1440),h=Math.floor(m%1440/60),mm=m%60;return d?`${d}d ${h}h`:h?`${h}h ${mm}m`:`${mm}m`};
+const mapUrl=a=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(a);
+const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
+
+async function rpc(fn,args){
+  const r=await fetch(`${SB}/rest/v1/rpc/${fn}`,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify(args)});
+  const t=await r.text();let j=null;try{j=t?JSON.parse(t):null}catch(e){}
+  if(!r.ok){const e=new Error((j&&j.message)||"Couldn't reach the game. Check your connection.");e.code=j&&j.code;throw e}
+  return j;
+}
+
+let game=store.get('ph-game'),token=store.get('ph-token'),admin=store.get('ph-admin');
+let teams=[],players=[],logs=[],me=null,pending=null,editing=null,picked=null,skew=0;
+const photos=new Map();
+const tById=id=>teams.find(t=>t.id===id);
+const tName=id=>tById(id)?.name||'A removed family';
+const myTeam=()=>me&&me.team_id&&tById(me.team_id)?me.team_id:null;
+const isAdmin=()=>!!admin;
+const now=()=>Date.now()+skew;
+
+function unlockAt(t){const [y,m,d]=dayOf(t).split('-').map(Number);return Date.UTC(y,m-1,d+2,6)}
+function compute(){
+  const s={};teams.forEach(t=>s[t.id]={pts:0,steals:0,daily:0,catches:0,caught:0,hold:0});
+  const asc=[...logs].sort((a,b)=>a.seq-b.seq),end=Math.min(now(),GAME_END);
+  let holder=null,since=0,lock=null;
+  for(const l of asc){
+    const S=s[l.team_id],R=s[l.raider_id];
+    if(l.type==='steal'&&S){S.pts+=PTS.steal;S.steals++}
+    if(l.type==='daily'&&S){S.pts+=PTS.daily;S.daily++}
+    if(l.type==='caught'){if(S)S.catches++;if(R){R.pts+=PTS.raider;R.caught++}}
+    if(l.type==='steal'||l.type==='start'){if(holder&&s[holder])s[holder].hold+=Math.max(0,Math.min(l.at,end)-since);lock=(l.type==='steal'&&holder&&holder!==l.team_id)?{victim:holder,thief:l.team_id,until:unlockAt(l.at)}:null;holder=l.team_id;since=l.at}
+  }
+  if(holder&&s[holder])s[holder].hold+=Math.max(0,end-since);
+  return {s,holder,since,lock};
+}
+
+function fitSign(name){
+  const T=$('#signName'),R=$('#signRect'),P=$('#signPost'),ns='http://www.w3.org/2000/svg',maxW=86,top=170;
+  const words=String(name).split(/\s+/).filter(Boolean);
+  const set=(lines,fs)=>{T.textContent='';T.setAttribute('font-size',fs);lines.forEach((ln,i)=>{const s=document.createElementNS(ns,'tspan');s.setAttribute('x','321');s.setAttribute('dy',i?String(fs*1.1):'0');s.textContent=ln;T.appendChild(s)})};
+  const widest=()=>Math.max(0,...[...T.children].map(s=>s.getComputedTextLength()));
+  let lines=[words.join(' ')],fs=14;set(lines,fs);
+  if(widest()>maxW&&words.length>1){let best=null;fs=13;
+    for(let i=1;i<words.length;i++){const l=[words.slice(0,i).join(' '),words.slice(i).join(' ')];set(l,fs);const w=widest();if(!best||w<best.w)best={l,w}}
+    lines=best.l;set(lines,fs)}
+  while(widest()>maxW&&fs>7){fs-=1;set(lines,fs)}
+  const h=16+fs*1.1*lines.length+8;
+  T.setAttribute('y',String(top+14+fs));R.setAttribute('height',String(h));
+  P.setAttribute('y',String(top+h));P.setAttribute('height',String(Math.max(0,266-top-h)));
+}
+
+function renderStatus(){
+  const {holder,since,lock}=compute(),n=now(),t=tById(holder);
+  $('#holder').textContent=holder?tName(holder):'Nobody yet';
+  $('#holderAv').innerHTML=holder?avatar(t?.avatar,52):'';
+  $('#holderAddr').innerHTML=t&&t.address?`${esc(t.address)} · <a href="${esc(mapUrl(t.address))}" target="_blank" rel="noopener">Directions</a>`:'';
+  fitSign(holder?tName(holder):'Nobody yet');
+  $('#held').textContent=holder?`Held for ${dur(Math.min(n,GAME_END)-since)} · since ${when(since)}`:'Waiting for the starting yard or the first steal.';
+  const ph=$('#phase');ph.className='chip';let p;
+  if(n<FREEZE_START)p=`Open season · Christmas freeze in ${dur(FREEZE_START-n)}`;
+  else if(n<FREEZE_END){ph.classList.add('freeze');p='Christmas freeze · no steals until Dec 26, 6am'}
+  else if(n<GAME_END)p=`Open season · game ends in ${dur(GAME_END-n)}`;
+  else{ph.classList.add('over');p='Game over · final standings'}
+  $('#phaseTxt').textContent=p;
+  const L=$('#lock'),mt=myTeam();
+  if(lock&&n<lock.until&&n<GAME_END&&tById(lock.victim)){L.hidden=false;
+    $('#lockWho').textContent=mt===lock.victim?'Your family':tName(lock.victim);
+    $('#lockTxt').textContent=` can steal it back from ${tName(lock.thief)} in `;
+    $('#lockLeft').textContent=dur(lock.until-n);
+    $('#lockAt').textContent=` (${when(lock.until)}). Everyone else can go now.`;
+    L.classList.toggle('me',mt===lock.victim)}else L.hidden=true;
+  const b=$('#openLog'),w=$('#who');
+  if(mt){b.textContent='Log points';w.innerHTML=`Posting as <b>${esc(me.nickname)}</b> for <b>${esc(tName(mt))}</b>`}
+  else{b.textContent=isAdmin()?'Log points':'Join your family';w.textContent=isAdmin()?'Owner mode: you can post for any family.':'Pick your family to start posting.'}
+  $('#ownerBar').hidden=!isAdmin();$('#startOpt').hidden=!isAdmin();
+}
+function renderBoard(){
+  const {s}=compute();
+  if(!teams.length){$('#board').innerHTML='<div class="empty">No families yet. The first family to register starts the list.</div>';return}
+  const rows=teams.map(t=>({t,...s[t.id]})).sort((a,b)=>b.pts-a.pts||b.steals-a.steals||b.hold-a.hold);
+  $('#board').innerHTML=rows.map((r,i)=>`<div class="row${i===0&&r.pts>0?' first':''}"><div class="rank">${i+1}</div><div><div class="tn">${avatar(r.t.avatar,36)}${esc(r.t.name)}</div><div class="stats">${r.steals} steals · ${r.daily} yard pics · ${r.catches} catches · caught ${r.caught}× · held ${dur(r.hold)}</div></div><div class="pts">${r.pts}<small>pts</small></div></div>`).join('');
+}
+function label(l){
+  if(l.type==='steal')return [`${esc(tName(l.team_id))} stole the penguin`,`+${PTS.steal}`,'plus'];
+  if(l.type==='daily')return [`${esc(tName(l.team_id))} yard photo`,`+${PTS.daily}`,'plus'];
+  if(l.type==='start')return [`It starts in ${esc(tName(l.team_id))}'s yard`,'0','zero'];
+  return [`${esc(tName(l.raider_id))} caught by ${esc(tName(l.team_id))}`,`${PTS.raider}`,'minus'];
+}
+const nick=id=>{const p=players.find(x=>x.id===id);return p?p.nickname:(id?'a former player':'the game owner')};
+function renderFeed(){
+  if(!logs.length){$('#feed').innerHTML='<div class="empty">No points logged yet. The first steal goes here.</div>';return}
+  $('#feed').innerHTML=logs.map(l=>{
+    const [title,b,cls]=label(l),src=photos.get(l.id),mayDel=isAdmin()||(me&&l.player_id===me.player_id);
+    return `<article class="post"><div class="ph">${src?`<img alt="Proof photo" src="${esc(src)}">`:`<span data-photo="${esc(l.id)}">Loading photo…</span>`}</div><div class="pb"><div class="pt">${title}<span class="badge ${cls}">${esc(b)}</span></div>${l.note?`<div>${esc(l.note)}</div>`:''}<div class="meta">${esc(when(l.at))} · posted by ${esc(nick(l.player_id))}</div>${mayDel?`<button class="del" data-del="${esc(l.id)}">${pending===l.id?'Tap again to delete':'Delete'}</button>`:''}</div></article>`;
+  }).join('');
+  loadPhotos();
+}
+async function loadPhotos(){
+  for(const el of document.querySelectorAll('[data-photo]')){
+    const id=el.dataset.photo;if(photos.has(id))continue;photos.set(id,null);
+    try{const v=await rpc('get_photo',{p_game:game,p_id:id});
+      if(typeof v==='string'&&v.startsWith('data:image/')){photos.set(id,v);document.querySelectorAll(`[data-photo="${CSS.escape(id)}"]`).forEach(x=>{const img=new Image();img.alt='Proof photo';img.src=v;x.replaceWith(img)})}
+      else el.textContent='No photo';
+    }catch(e){photos.delete(id);el.textContent='Photo unavailable'}
+  }
+}
+function renderFams(){
+  const mt=myTeam();
+  $('#fams').innerHTML=(teams.length?teams.map(t=>{
+    const ppl=players.filter(p=>p.team_id===t.id).map(p=>esc(p.nickname)).join(', ');
+    const canEd=mt===t.id||isAdmin();
+    return `<div class="fam${mt===t.id?' mine':''}"><div class="tn">${avatar(t.avatar,48)}<span>${esc(t.name)}${mt===t.id?' <span class="note">(you)</span>':''}</span></div><div class="addr">${t.address?`${esc(t.address)} · <a href="${esc(mapUrl(t.address))}" target="_blank" rel="noopener">Map</a>`:'<span class="note">No address yet</span>'}</div><div class="mem">${ppl?'Players: '+ppl:'No players yet'}</div>${canEd?`<div class="fbtns"><button class="btn small ghost" data-edit="${esc(t.id)}">Edit</button>${isAdmin()?`<button class="btn small ghost" data-rm="${esc(t.id)}">${pending==='t:'+t.id?'Tap again to remove':'Remove'}</button>`:''}</div>`:''}</div>`}).join(''):'<div class="empty">No families yet.</div>')
+    +(!mt?`<div class="fam"><h3>Not on a team yet?</h3><p class="note">Join your family or register a new one.</p><div><button class="btn small" data-join>Join your family</button></div></div>`:'');
+  $('#players').hidden=!isAdmin();
+  if(isAdmin()){
+    $('#plist').innerHTML=players.length?`<div class="lbl">Players</div>`+players.map(p=>`<div class="prow"><span>${esc(p.nickname)}</span><select data-assign="${esc(p.id)}" aria-label="Family for ${esc(p.nickname)}">${p.team_id?'':'<option value="">No family</option>'}${teams.map(t=>`<option value="${esc(t.id)}"${p.team_id===t.id?' selected':''}>${esc(t.name)}</option>`).join('')}</select><button class="btn small ghost" data-unassign="${esc(p.id)}">${pending==='u:'+p.id?'Sure?':'Remove'}</button></div>`).join(''):'<p class="note">Nobody has joined yet.</p>'}
+  const opts=teams.map(t=>`<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('');
+  for(const id of ['team','other']){const el=$('#'+id),v=el.value;el.innerHTML=opts;if(v&&tById(v))el.value=v}
+  if(mt&&!$('#team').dataset.touched)$('#team').value=mt;
+}
+function render(){renderStatus();renderBoard();renderFeed();renderFams()}
+
+function banner(t){const b=$('#banner');b.textContent=t;b.style.display=t?'block':'none'}
+async function refresh(){
+  if(!game)return;
+  try{
+    const st=await rpc('get_state',{p_game:game});
+    teams=st.teams||[];players=st.players||[];logs=st.logs||[];skew=(st.now||Date.now())-Date.now();
+    if(token){const w=await rpc('whoami',{p_game:game,p_token:token});if(w)me=w;else{me=null;token=null;store.set('ph-token',null)}}
+    banner('');render();
+  }catch(e){
+    if(e.code==='28P01'){game=null;store.set('ph-game',null);showGate('The game password changed. Enter the new one.');return}
+    banner("Can't reach the game right now. It may be out of date.");
+  }
+}
+function showGate(msg){$('#gate').hidden=false;$('#gateErr').textContent=msg||'';setTimeout(()=>$('#gatePw').focus(),50)}
+$('#gateForm').addEventListener('submit',async e=>{
+  e.preventDefault();const pw=$('#gatePw').value.trim();if(!pw)return;
+  try{const ok=await rpc('check_game',{p_game:pw});
+    if(!ok){$('#gateErr').textContent="That's not it. Ask the game owner for the password.";return}
+    game=pw;store.set('ph-game',pw);$('#gate').hidden=true;await refresh();if(!myTeam()&&!isAdmin())openJoin();
+  }catch(err){$('#gateErr').textContent=err.message}
+});
+
+for(const [box,name] of [['#cAv','cav'],['#eAv','eav']])$(box).innerHTML=Object.entries(AV).map(([k,a],i)=>`<label class="avopt"><input type="radio" name="${name}" value="${k}"${i===0?' checked':''}>${avatar(k,48)}${a[0]}</label>`).join('');
+const pickAv=n=>document.querySelector(`input[name=${n}]:checked`)?.value||'penguin';
+
+const open=id=>{document.querySelectorAll('.err').forEach(e=>{if(e.id!=='gateErr')e.textContent=''});$(id).classList.add('on')};
+const closeAll=()=>document.querySelectorAll('.ov').forEach(o=>o.classList.remove('on'));
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeAll));
+document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeAll()}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});
+
+const type=()=>document.querySelector('input[name=type]:checked').value;
+function syncForm(){
+  $('#fCaught').style.display=type()==='caught'?'grid':'none';
+  $('#forPick').hidden=!isAdmin();$('#forFixed').hidden=isAdmin();
+  const mt=myTeam();$('#forBox').innerHTML=mt?`${avatar(tById(mt)?.avatar,30)}${esc(tName(mt))}`:'No family yet';
+}
+$('#opts').addEventListener('change',syncForm);
+$('#team').addEventListener('change',()=>{$('#team').dataset.touched='1'});
+function openJoin(){
+  picked=null;$('#jPanel').hidden=true;
+  $('#joinList').innerHTML=teams.length?teams.map(t=>`<button type="button" class="jbtn" data-pick="${esc(t.id)}">${avatar(t.avatar,40)}<span>${esc(t.name)}</span></button>`).join(''):'<p class="note">No families yet. Register yours below.</p>';
+  open('#ovJoin');
+}
+$('#openLog').addEventListener('click',()=>{
+  if(!isAdmin()&&!myTeam()){openJoin();return}
+  if(!teams.length){banner('No families yet. Register one in Families.');return}
+  open('#ov');syncForm();
+});
+$('#photo').addEventListener('change',()=>{const f=$('#photo').files[0],p=$('#prev');if(f){p.src=URL.createObjectURL(f);p.style.display='block'}else p.style.display='none'});
+
+function signedIn(res){token=res.token;store.set('ph-token',token);me={player_id:res.player_id,team_id:res.team_id,nickname:''};closeAll();refresh()}
+$('#joinList').addEventListener('click',e=>{
+  const b=e.target.closest('[data-pick]');if(!b)return;picked=b.dataset.pick;
+  document.querySelectorAll('.jbtn').forEach(x=>x.classList.toggle('pick',x===b));
+  $('#jPick').textContent=`Join ${tName(picked)}`;$('#jPanel').hidden=false;$('#jPin').focus();
+});
+$('#jGo').addEventListener('click',async()=>{
+  const pin=$('#jPin').value.trim(),n=$('#jNick').value.trim();
+  if(!picked)return;if(!pin){$('#jErr').textContent='Enter your family PIN.';return}if(!n){$('#jErr').textContent='Add your name.';return}
+  try{const r=await rpc('join_team',{p_game:game,p_team:picked,p_pin:pin,p_nickname:n});
+    if(r&&r.error){$('#jErr').textContent=r.error;return}signedIn(r)}catch(err){$('#jErr').textContent=err.message}
+});
+$('#joinForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  try{const r=await rpc('create_team',{p_game:game,p_name:$('#cName').value,p_avatar:pickAv('cav'),p_address:$('#cAddr').value,p_pin:$('#cPin').value,p_nickname:$('#cNick').value});
+    $('#joinForm').reset();signedIn(r)}catch(err){$('#jErr').textContent=err.message}
+});
+function openEdit(id){
+  const t=tById(id);if(!t)return;editing=id;$('#eName').value=t.name;$('#eAddr').value=t.address;$('#ePin').value='';$('#ePinWrap').hidden=!isAdmin();
+  const r=document.querySelector(`input[name=eav][value="${CSS.escape(t.avatar)}"]`);if(r)r.checked=true;open('#ovEdit');
+}
+$('#editForm').addEventListener('submit',async e=>{
+  e.preventDefault();const a={p_game:game,p_name:$('#eName').value,p_avatar:pickAv('eav'),p_address:$('#eAddr').value};
+  try{
+    if(isAdmin()){await rpc('admin_update_team',{...a,p_admin:admin,p_team:editing});const pin=$('#ePin').value.trim();if(pin)await rpc('admin_set_pin',{p_game:game,p_admin:admin,p_team:editing,p_pin:pin})}
+    else await rpc('update_team',{...a,p_token:token});
+    closeAll();refresh()}catch(err){$('#eErr').textContent=err.message}
+});
+
+async function shrink(file,max,q){
+  const url=URL.createObjectURL(file),img=new Image();img.src=url;await img.decode();
+  const k=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)),c=document.createElement('canvas');
+  c.width=Math.round(img.naturalWidth*k);c.height=Math.round(img.naturalHeight*k);
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);return c.toDataURL('image/jpeg',q);
+}
+$('#logForm').addEventListener('submit',async e=>{
+  e.preventDefault();const t=type(),f=$('#photo').files[0];
+  if(!f){$('#err').textContent='Add a photo. Every point needs proof.';return}
+  const btn=$('#sendBtn');btn.disabled=true;btn.textContent='Posting…';$('#err').textContent='';
+  try{
+    let data=await shrink(f,900,.72);if(data.length>300000)data=await shrink(f,640,.6);
+    const common={p_game:game,p_type:t,p_other:t==='caught'?$('#other').value:null,p_role:document.querySelector('input[name=role]:checked').value,p_note:$('#noteIn').value,p_photo:data};
+    const id=isAdmin()?await rpc('admin_post_log',{...common,p_admin:admin,p_team:$('#team').value}):await rpc('post_log',{...common,p_token:token});
+    if(id)photos.set(id,data);
+    closeAll();$('#logForm').reset();$('#prev').style.display='none';syncForm();refresh();
+  }catch(err){$('#err').textContent=err.message}
+  btn.disabled=false;btn.textContent='Post it';
+});
+$('#feed').addEventListener('click',async e=>{
+  const id=e.target.dataset&&e.target.dataset.del;if(!id)return;
+  if(pending!==id){pending=id;renderFeed();return}
+  pending=null;try{isAdmin()?await rpc('admin_delete_log',{p_game:game,p_admin:admin,p_id:id}):await rpc('delete_log',{p_game:game,p_token:token,p_id:id});refresh()}catch(err){banner(err.message)}
+});
+$('#fams').addEventListener('click',async e=>{
+  const d=e.target.dataset||{};
+  if('join' in d){openJoin();return}
+  if(d.edit){openEdit(d.edit);return}
+  if(d.rm){if(pending!=='t:'+d.rm){pending='t:'+d.rm;renderFams();return}
+    pending=null;try{await rpc('admin_delete_team',{p_game:game,p_admin:admin,p_team:d.rm});refresh()}catch(err){banner(err.message)}}
+});
+$('#plist').addEventListener('change',async e=>{const u=e.target.dataset.assign;if(!u||!e.target.value)return;try{await rpc('admin_move_player',{p_game:game,p_admin:admin,p_player:u,p_team:e.target.value});refresh()}catch(err){banner(err.message)}});
+$('#plist').addEventListener('click',async e=>{const u=e.target.dataset.unassign;if(!u)return;
+  if(pending!=='u:'+u){pending='u:'+u;renderFams();return}
+  pending=null;try{await rpc('admin_remove_player',{p_game:game,p_admin:admin,p_player:u});refresh()}catch(err){banner(err.message)}});
+$('#gpwForm').addEventListener('submit',async e=>{e.preventDefault();const v=$('#gpwNew').value.trim();if(!v)return;
+  try{await rpc('admin_set_game_password',{p_game:game,p_admin:admin,p_new:v});game=v;store.set('ph-game',v);$('#gpwNew').value='';banner(`Game password changed to "${v}". Share the new one with the families.`)}catch(err){banner(err.message)}});
+$('#ownerOpen').addEventListener('click',()=>open('#ovOwner'));
+$('#ownerForm').addEventListener('submit',async e=>{e.preventDefault();const pw=$('#ownPw').value.trim();
+  try{const ok=await rpc('check_admin',{p_game:game,p_admin:pw});if(!ok){$('#oErr').textContent='Wrong owner password.';return}
+    admin=pw;store.set('ph-admin',pw);$('#ownPw').value='';closeAll();render()}catch(err){$('#oErr').textContent=err.message}});
+$('#ownerOff').addEventListener('click',()=>{admin=null;store.set('ph-admin',null);render()});
+$('#signOut').addEventListener('click',()=>{if(pending!=='signout'){pending='signout';$('#signOut').textContent='Tap again to sign out';return}
+  pending=null;token=null;me=null;store.set('ph-token',null);$('#signOut').textContent='Sign this phone out';render()});
+
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(teams.length||logs.length)renderStatus()});
+setInterval(()=>{if(document.visibilityState==='visible')refresh()},20000);
+setInterval(()=>{renderStatus();renderBoard()},60000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refresh()});
+if(game){$('#gate').hidden=true;refresh().then(()=>{if(game&&!myTeam()&&!isAdmin()&&teams)openJoin()})}else showGate();
+}
+</script>
+</body>
+</html>
