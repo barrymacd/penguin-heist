@@ -225,7 +225,7 @@ label.f{display:grid;gap:6px;font-weight:700}
     <div id="plist"></div>
     <form class="addf" id="gpwForm" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="f" style="flex:1 1 200px">Change game password<input id="gpwNew" autocapitalize="none"></label><button class="btn small" type="submit">Save</button></form>
   </div>
-  <p class="note" style="margin-top:12px">Times use Central time. · v2.4 · <button class="linkbtn" id="ownerOpen">Game owner</button> · <button class="linkbtn" id="signOut">Sign this phone out</button></p>
+  <p class="note" style="margin-top:12px">Times use Central time. · v2.5 · <button class="linkbtn" id="ownerOpen">Game owner</button> · <button class="linkbtn" id="signOut">Sign this phone out</button></p>
 </div></section>
 
 <div class="ov" id="ov" role="dialog" aria-modal="true" aria-labelledby="logTitle">
@@ -270,6 +270,7 @@ label.f{display:grid;gap:6px;font-weight:700}
     <label class="f">Team name<input id="cName" maxlength="40" placeholder="The Flurry Bandits"></label>
     <div><div class="lbl" style="margin-bottom:6px">Christmas avatar</div><div class="avgrid" id="cAv"></div></div>
     <label class="f">Home address<input id="cAddr" maxlength="120" placeholder="123 Holly Lane, Nashville" autocomplete="street-address"></label>
+    <label class="f">Kids' names (optional, separate with commas)<input id="cKids" maxlength="250" placeholder="Emma, Jack" autocomplete="off"></label>
     <label class="f">Family PIN (share it with your family)<input id="cPin" inputmode="numeric" autocomplete="off" placeholder="At least 4 digits"></label>
     <label class="f">Your name<input id="cNick" maxlength="30" placeholder="Barry"></label>
     <p class="err" id="jErr"></p>
@@ -283,6 +284,7 @@ label.f{display:grid;gap:6px;font-weight:700}
     <label class="f">Team name<input id="eName" maxlength="40"></label>
     <div><div class="lbl" style="margin-bottom:6px">Christmas avatar</div><div class="avgrid" id="eAv"></div></div>
     <label class="f">Home address<input id="eAddr" maxlength="120" autocomplete="street-address"></label>
+    <label class="f">Kids' names (optional, separate with commas)<input id="eKids" maxlength="250" placeholder="Emma, Jack" autocomplete="off"></label>
     <label class="f" id="ePinWrap" hidden>New family PIN (owner, optional)<input id="ePin" inputmode="numeric" autocomplete="off"></label>
     <p class="err" id="eErr"></p>
     <div class="fbtns"><button class="btn" type="submit">Save</button><button class="btn ghost" type="button" data-close>Cancel</button></div>
@@ -439,9 +441,9 @@ async function loadPhotos(){
 function renderFams(){
   const mt=myTeam();
   $('#fams').innerHTML=(teams.length?teams.map(t=>{
-    const ppl=players.filter(p=>p.team_id===t.id).map(p=>esc(p.nickname)).join(', ');
+    const ppl=[...players.filter(p=>p.team_id===t.id).map(p=>p.nickname),...(t.kids||[])].map(esc).join(', ');
     const canEd=mt===t.id||isAdmin();
-    return `<div class="fam${mt===t.id?' mine':''}"><div class="tn">${avatar(t.avatar,48)}<span>${esc(t.name)}${mt===t.id?' <span class="note">(you)</span>':''}</span></div><div class="addr">${t.address?`${esc(t.address)} · <a href="${esc(mapUrl(t.address))}" target="_blank" rel="noopener">Map</a>`:'<span class="note">No address yet</span>'}</div><div class="mem">${ppl?'Players: '+ppl:'No players yet'}</div>${canEd?`<div class="fbtns"><button class="btn small ghost" data-edit="${esc(t.id)}">Edit</button>${isAdmin()?`<button class="btn small ghost" data-rm="${esc(t.id)}">${pending==='t:'+t.id?'Tap again to remove':'Remove'}</button>`:''}</div>`:''}</div>`}).join(''):'<div class="empty">No families yet.</div>')
+    return `<div class="fam${mt===t.id?' mine':''}"><div class="tn">${avatar(t.avatar,48)}<span>${esc(t.name)}${mt===t.id?' <span class="note">(you)</span>':''}</span></div><div class="addr">${t.address?`${esc(t.address)} · <a href="${esc(mapUrl(t.address))}" target="_blank" rel="noopener">Map</a>`:'<span class="note">No address yet</span>'}</div><div class="mem">${ppl?'Members: '+ppl:'No members yet'}</div>${canEd?`<div class="fbtns"><button class="btn small ghost" data-edit="${esc(t.id)}">Edit</button>${isAdmin()?`<button class="btn small ghost" data-rm="${esc(t.id)}">${pending==='t:'+t.id?'Tap again to remove':'Remove'}</button>`:''}</div>`:''}</div>`}).join(''):'<div class="empty">No families yet.</div>')
     +(!mt?`<div class="fam"><h3>Not on a team yet?</h3><p class="note">Join your family or register a new one.</p><div><button class="btn small" data-join>Join your family</button></div></div>`:'');
   $('#players').hidden=!isAdmin();
   if(isAdmin()){
@@ -519,10 +521,11 @@ $('#jGo').addEventListener('click',async()=>{
 $('#joinForm').addEventListener('submit',async e=>{
   e.preventDefault();
   try{const r=await rpc('create_team',{p_game:game,p_name:$('#cName').value,p_avatar:pickAv('cav'),p_address:$('#cAddr').value,p_pin:$('#cPin').value,p_nickname:$('#cNick').value});
+    const kids=$('#cKids').value.trim();if(kids){try{await rpc('set_kids',{p_game:game,p_token:r.token,p_kids:kids})}catch(e){}}
     $('#joinForm').reset();signedIn(r)}catch(err){$('#jErr').textContent=err.message}
 });
 function openEdit(id){
-  const t=tById(id);if(!t)return;editing=id;$('#eName').value=t.name;$('#eAddr').value=t.address;$('#ePin').value='';$('#ePinWrap').hidden=!isAdmin();
+  const t=tById(id);if(!t)return;editing=id;$('#eName').value=t.name;$('#eAddr').value=t.address;$('#eKids').value=(t.kids||[]).join(', ');$('#ePin').value='';$('#ePinWrap').hidden=!isAdmin();
   const r=document.querySelector(`input[name=eav][value="${CSS.escape(t.avatar)}"]`);if(r)r.checked=true;open('#ovEdit');
 }
 $('#editForm').addEventListener('submit',async e=>{
@@ -530,6 +533,8 @@ $('#editForm').addEventListener('submit',async e=>{
   try{
     if(isAdmin()){await rpc('admin_update_team',{...a,p_admin:admin,p_team:editing});const pin=$('#ePin').value.trim();if(pin)await rpc('admin_set_pin',{p_game:game,p_admin:admin,p_team:editing,p_pin:pin})}
     else await rpc('update_team',{...a,p_token:token});
+    const kids=$('#eKids').value;
+    if(isAdmin())await rpc('admin_set_kids',{p_game:game,p_admin:admin,p_team:editing,p_kids:kids});else await rpc('set_kids',{p_game:game,p_token:token,p_kids:kids});
     closeAll();refresh()}catch(err){$('#eErr').textContent=err.message}
 });
 
