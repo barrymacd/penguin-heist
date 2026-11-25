@@ -103,6 +103,11 @@ label.f{display:grid;gap:6px;font-weight:700}
 @media(max-width:480px){.two{grid-template-columns:1fr}.row{grid-template-columns:28px minmax(0,1fr) auto;padding:10px 12px;gap:8px}.pts{font-size:24px}.prow{grid-template-columns:1fr 1fr}.prow span{grid-column:1/-1}}
 
 [hidden]{display:none!important}
+.usage{background:var(--bg);border:2px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:6px}
+.meter{height:10px;border-radius:99px;background:var(--line);overflow:hidden}.meter i{display:block;height:100%;background:var(--green)}
+.meter i.warn{background:var(--gold)}.meter i.bad{background:var(--red)}
+.phbtn{display:block;width:100%;height:100%;border:0;padding:0;background:none;cursor:zoom-in}
+.phbtn.tap{font:700 15px Nunito;color:var(--soft);cursor:pointer}
 .kid{display:flex;gap:10px;align-items:flex-start;border:2px solid var(--line);border-radius:14px;padding:12px;cursor:pointer;font-size:15px}
 .kid:has(input:checked){border-color:var(--green);background:light-dark(#e9f7ef,#12301f)}
 .kid input{width:22px;height:22px;min-height:0;flex:none;margin-top:2px;accent-color:var(--green)}
@@ -222,10 +227,11 @@ label.f{display:grid;gap:6px;font-weight:700}
   <div class="fams" id="fams"><div class="empty">No families yet.</div></div>
   <div class="players" id="players" hidden>
     <h3>Owner tools</h3>
+    <div class="usage" id="usage"><b>Free plan usage</b><div id="usageBody" class="note">Tap refresh to check.</div><button class="linkbtn" type="button" id="usageBtn">Refresh usage</button></div>
     <div id="plist"></div>
     <form class="addf" id="gpwForm" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="f" style="flex:1 1 200px">Change game password<input id="gpwNew" autocapitalize="none"></label><button class="btn small" type="submit">Save</button></form>
   </div>
-  <p class="note" style="margin-top:12px">Times use Central time. · v2.5 · <button class="linkbtn" id="ownerOpen">Game owner</button> · <button class="linkbtn" id="signOut">Sign this phone out</button></p>
+  <p class="note" style="margin-top:12px">Times use Central time. · v2.6 · <button class="linkbtn" id="ownerOpen">Game owner</button> · <button class="linkbtn" id="signOut">Sign this phone out</button></p>
 </div></section>
 
 <div class="ov" id="ov" role="dialog" aria-modal="true" aria-labelledby="logTitle">
@@ -291,6 +297,10 @@ label.f{display:grid;gap:6px;font-weight:700}
   </form>
 </div>
 
+<div class="ov" id="ovPhoto" role="dialog" aria-modal="true" aria-label="Full photo">
+  <div class="sheet" style="justify-items:center"><p class="note" id="fullNote"></p><img id="fullImg" alt="Full proof photo" hidden style="max-width:100%;max-height:70vh;border-radius:14px"><button class="btn ghost" type="button" data-close>Close</button></div>
+</div>
+
 <div class="ov" id="ovOwner" role="dialog" aria-modal="true" aria-labelledby="ownTitle">
   <form class="sheet" id="ownerForm">
     <h2 id="ownTitle" style="margin:0">Game owner</h2>
@@ -341,7 +351,11 @@ async function rpc(fn,args){
 
 let game=store.get('ph-game'),token=store.get('ph-token'),admin=store.get('ph-admin');
 let teams=[],players=[],logs=[],me=null,pending=null,editing=null,picked=null,skew=0;
-const photos=new Map();
+const thumbs=new Map();let showN=10,maxSeq=0,syncing=false;
+const idb=(()=>{let dbp=null;const open=()=>dbp||(dbp=new Promise((res,rej)=>{try{const r=indexedDB.open('penguin-heist',1);r.onupgradeneeded=()=>r.result.createObjectStore('img');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}}));
+  return{get:async k=>{try{const d=await open();return await new Promise(r=>{const q=d.transaction('img').objectStore('img').get(k);q.onsuccess=()=>r(q.result??null);q.onerror=()=>r(null)})}catch(e){return null}},
+         set:async(k,v)=>{try{const d=await open();d.transaction('img','readwrite').objectStore('img').put(v,k)}catch(e){}}}})();
+const okImg=v=>typeof v==='string'&&v.startsWith('data:image/');
 const tById=id=>teams.find(t=>t.id===id);
 const tName=id=>tById(id)?.name||'A removed family';
 const myTeam=()=>me&&me.team_id&&tById(me.team_id)?me.team_id:null;
@@ -423,20 +437,28 @@ function label(l){
 const nick=id=>{const p=players.find(x=>x.id===id);return p?p.nickname:(id?'a former player':'the game owner')};
 function renderFeed(){
   if(!logs.length){$('#feed').innerHTML='<div class="empty">No points logged yet. The first steal goes here.</div>';return}
-  $('#feed').innerHTML=logs.map(l=>{
-    const [title,b,cls]=label(l),src=photos.get(l.id),mayDel=isAdmin()||(me&&l.player_id===me.player_id);
-    return `<article class="post"><div class="ph">${src?`<img alt="Proof photo" src="${esc(src)}">`:`<span data-photo="${esc(l.id)}">Loading photo…</span>`}</div><div class="pb"><div class="pt">${title}<span class="badge ${cls}">${esc(b)}</span></div>${l.note?`<div>${esc(l.note)}</div>`:''}<div class="meta">${esc(when(l.at))} · posted by ${esc(nick(l.player_id))}</div>${mayDel?`<button class="del" data-del="${esc(l.id)}">${pending===l.id?'Tap again to delete':'Delete'}</button>`:''}</div></article>`;
-  }).join('');
-  loadPhotos();
+  const shown=logs.slice(0,showN);
+  $('#feed').innerHTML=shown.map(l=>{
+    const [title,b,cls]=label(l),th=thumbs.get(l.id),mayDel=isAdmin()||(me&&l.player_id===me.player_id);
+    const pic=th?`<button class="phbtn" data-full="${esc(l.id)}" aria-label="Open full photo"><img alt="Proof photo" src="${esc(th)}"></button>`:th===''?`<button class="phbtn tap" data-full="${esc(l.id)}">Tap to view photo</button>`:`<span>Loading photo…</span>`;
+    return `<article class="post"><div class="ph">${pic}</div><div class="pb"><div class="pt">${title}<span class="badge ${cls}">${esc(b)}</span></div>${l.note?`<div>${esc(l.note)}</div>`:''}<div class="meta">${esc(when(l.at))} · posted by ${esc(nick(l.player_id))}</div>${mayDel?`<button class="del" data-del="${esc(l.id)}">${pending===l.id?'Tap again to delete':'Delete'}</button>`:''}</div></article>`;
+  }).join('')+(logs.length>showN?`<div style="grid-column:1/-1;text-align:center"><button class="btn ghost" id="moreBtn">Show ${Math.min(10,logs.length-showN)} more</button></div>`:'');
+  loadThumbs(shown.map(l=>l.id));
 }
-async function loadPhotos(){
-  for(const el of document.querySelectorAll('[data-photo]')){
-    const id=el.dataset.photo;if(photos.has(id))continue;photos.set(id,null);
-    try{const v=await rpc('get_photo',{p_game:game,p_id:id});
-      if(typeof v==='string'&&v.startsWith('data:image/')){photos.set(id,v);document.querySelectorAll(`[data-photo="${CSS.escape(id)}"]`).forEach(x=>{const img=new Image();img.alt='Proof photo';img.src=v;x.replaceWith(img)})}
-      else el.textContent='No photo';
-    }catch(e){photos.delete(id);el.textContent='Photo unavailable'}
-  }
+// thumbnails: phone cache first, then one batched request for the rest
+async function loadThumbs(ids){
+  const need=ids.filter(id=>!thumbs.has(id));if(!need.length)return;
+  let changed=false;const miss=[];
+  for(const id of need){const v=await idb.get('t:'+id);if(okImg(v)){thumbs.set(id,v);changed=true}else miss.push(id)}
+  if(miss.length){try{const m=await rpc('get_thumbs',{p_game:game,p_ids:miss.slice(0,30)})||{};
+    for(const id of miss.slice(0,30)){const v=m[id];if(okImg(v)){thumbs.set(id,v);idb.set('t:'+id,v)}else thumbs.set(id,'')}changed=true}catch(e){}}
+  if(changed)renderFeed();
+}
+async function openFull(id){
+  const img=$('#fullImg'),note=$('#fullNote');img.removeAttribute('src');img.hidden=true;note.textContent='Loading photo…';open('#ovPhoto');
+  let v=await idb.get('f:'+id);
+  if(!okImg(v)){try{v=await rpc('get_photo',{p_game:game,p_id:id});if(okImg(v))idb.set('f:'+id,v)}catch(e){v=null}}
+  if(okImg(v)){img.src=v;img.hidden=false;note.textContent=''}else note.textContent="Couldn't load that photo.";
 }
 function renderFams(){
   const mt=myTeam();
@@ -455,24 +477,30 @@ function renderFams(){
 function render(){renderStatus();renderBoard();renderFeed();renderFams()}
 
 function banner(t){const b=$('#banner');b.textContent=t;b.style.display=t?'block':'none'}
-async function refresh(){
-  if(!game)return;
+async function refresh(full){
+  if(!game||syncing)return;syncing=true;
   try{
-    const st=await rpc('get_state',{p_game:game});
-    teams=st.teams||[];players=st.players||[];logs=st.logs||[];skew=(st.now||Date.now())-Date.now();
-    if(token){const w=await rpc('whoami',{p_game:game,p_token:token});if(w)me=w;else{me=null;token=null;store.set('ph-token',null)}}
+    let st;
+    if(full||!logs.length&&!maxSeq){st=await rpc('get_state',{p_game:game});logs=st.logs||[]}
+    else{st=await rpc('get_changes',{p_game:game,p_since:maxSeq});
+      const fresh=(st.logs||[]).filter(l=>!logs.some(x=>x.id===l.id));logs=[...fresh,...logs].sort((a,b)=>b.seq-a.seq);
+      if(logs.length!==Math.min(st.log_count,500)){st=await rpc('get_state',{p_game:game});logs=st.logs||[];full=true}}
+    teams=st.teams||[];players=st.players||[];skew=(st.now||Date.now())-Date.now();
+    maxSeq=logs.reduce((m,l)=>Math.max(m,l.seq),0);
+    if(token&&(full||!me||!me.nickname)){const w=await rpc('whoami',{p_game:game,p_token:token});if(w)me=w;else{me=null;token=null;store.set('ph-token',null)}}
     banner('');render();
   }catch(e){
-    if(e.code==='28P01'){game=null;store.set('ph-game',null);showGate('The game password changed. Enter the new one.');return}
+    if(e.code==='28P01'){game=null;store.set('ph-game',null);syncing=false;showGate('The game password changed. Enter the new one.');return}
     banner("Can't reach the game right now. It may be out of date.");
   }
+  syncing=false;
 }
 function showGate(msg){$('#gate').hidden=false;$('#gateErr').textContent=msg||'';setTimeout(()=>$('#gatePw').focus(),50)}
 $('#gateForm').addEventListener('submit',async e=>{
   e.preventDefault();const pw=$('#gatePw').value.trim();if(!pw)return;
   try{const ok=await rpc('check_game',{p_game:pw});
     if(!ok){$('#gateErr').textContent="That's not it. Ask the game owner for the password.";return}
-    game=pw;store.set('ph-game',pw);$('#gate').hidden=true;await refresh();if(!myTeam()&&!isAdmin())openJoin();
+    game=pw;store.set('ph-game',pw);$('#gate').hidden=true;await refresh(true);if(!myTeam()&&!isAdmin())openJoin();
   }catch(err){$('#gateErr').textContent=err.message}
 });
 
@@ -551,14 +579,17 @@ $('#logForm').addEventListener('submit',async e=>{
   const btn=$('#sendBtn');btn.disabled=true;btn.textContent='Posting…';$('#err').textContent='';
   try{
     let data=await shrink(f,900,.72);if(data.length>300000)data=await shrink(f,640,.6);
-    const common={p_game:game,p_type:t,p_other:t==='caught'?$('#other').value:null,p_role:document.querySelector('input[name=role]:checked').value,p_note:$('#noteIn').value,p_photo:data,p_kid:t==='steal'&&$('#kid').checked};
-    const id=isAdmin()?await rpc('admin_post_log',{...common,p_admin:admin,p_team:$('#team').value}):await rpc('post_log',{...common,p_token:token});
-    if(id)photos.set(id,data);
+    let thumb=await shrink(f,360,.6);if(thumb.length>55000)thumb=await shrink(f,260,.5);
+    const common={p_game:game,p_type:t,p_other:t==='caught'?$('#other').value:null,p_role:document.querySelector('input[name=role]:checked').value,p_note:$('#noteIn').value,p_photo:data,p_thumb:thumb,p_kid:t==='steal'&&$('#kid').checked};
+    const id=isAdmin()?await rpc('admin_post_entry',{...common,p_admin:admin,p_team:$('#team').value}):await rpc('post_entry',{...common,p_token:token});
+    if(id){thumbs.set(id,thumb);idb.set('t:'+id,thumb);idb.set('f:'+id,data)}
     closeAll();$('#logForm').reset();$('#prev').style.display='none';syncForm();refresh();
   }catch(err){$('#err').textContent=err.message}
   btn.disabled=false;btn.textContent='Post it';
 });
 $('#feed').addEventListener('click',async e=>{
+  if(e.target.id==='moreBtn'){showN+=10;renderFeed();return}
+  const fb=e.target.closest('[data-full]');if(fb){openFull(fb.dataset.full);return}
   const id=e.target.dataset&&e.target.dataset.del;if(!id)return;
   if(pending!==id){pending=id;renderFeed();return}
   pending=null;try{isAdmin()?await rpc('admin_delete_log',{p_game:game,p_admin:admin,p_id:id}):await rpc('delete_log',{p_game:game,p_token:token,p_id:id});refresh()}catch(err){banner(err.message)}
@@ -576,19 +607,28 @@ $('#plist').addEventListener('click',async e=>{const u=e.target.dataset.unassign
   pending=null;try{await rpc('admin_remove_player',{p_game:game,p_admin:admin,p_player:u});refresh()}catch(err){banner(err.message)}});
 $('#gpwForm').addEventListener('submit',async e=>{e.preventDefault();const v=$('#gpwNew').value.trim();if(!v)return;
   try{await rpc('admin_set_game_password',{p_game:game,p_admin:admin,p_new:v});game=v;store.set('ph-game',v);$('#gpwNew').value='';banner(`Game password changed to "${v}". Share the new one with the families.`)}catch(err){banner(err.message)}});
+async function loadUsage(){
+  if(!isAdmin())return;const B=$('#usageBody');B.textContent='Checking…';
+  try{const u=await rpc('admin_usage',{p_game:game,p_admin:admin});
+    const bar=pct=>`<div class="meter"><i class="${pct>=80?'bad':pct>=50?'warn':''}" style="width:${Math.min(100,Math.max(1,pct))}%"></i></div>`;
+    const proj=Number(u.projected_cycle_mb),pp=Math.round(proj/u.download_limit_mb*100);
+    B.innerHTML=`<div>Downloads this cycle (${esc(u.cycle_start)} to ${esc(u.cycle_end)}): <b>${esc(u.download_mb)} MB</b> of 5 GB (${esc(u.download_pct)}%)</div>${bar(Number(u.download_pct))}<div>On pace for about ${esc(proj)} MB this cycle (${esc(pp)}%) · last 7 days ${esc(u.last_7_days_mb)} MB</div><div style="margin-top:4px">Database: <b>${esc(u.database_mb)} MB</b> of 500 MB (${esc(u.database_pct)}%)</div>${bar(Number(u.database_pct))}<div>${esc(u.posts)} posts · ${esc(u.families)} families · ${esc(u.phones)} phones</div>`;
+  }catch(err){B.textContent=err.message}
+}
+$('#usageBtn').addEventListener('click',loadUsage);
 $('#ownerOpen').addEventListener('click',()=>open('#ovOwner'));
 $('#ownerForm').addEventListener('submit',async e=>{e.preventDefault();const pw=$('#ownPw').value.trim();
   try{const ok=await rpc('check_admin',{p_game:game,p_admin:pw});if(!ok){$('#oErr').textContent='Wrong owner password.';return}
-    admin=pw;store.set('ph-admin',pw);$('#ownPw').value='';closeAll();render()}catch(err){$('#oErr').textContent=err.message}});
+    admin=pw;store.set('ph-admin',pw);$('#ownPw').value='';closeAll();render();loadUsage()}catch(err){$('#oErr').textContent=err.message}});
 $('#ownerOff').addEventListener('click',()=>{admin=null;store.set('ph-admin',null);render()});
 $('#signOut').addEventListener('click',()=>{if(pending!=='signout'){pending='signout';$('#signOut').textContent='Tap again to sign out';return}
   pending=null;token=null;me=null;store.set('ph-token',null);$('#signOut').textContent='Sign this phone out';render()});
 
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(teams.length||logs.length)renderStatus()});
-setInterval(()=>{if(document.visibilityState==='visible')refresh()},20000);
+setInterval(()=>{if(document.visibilityState==='visible')refresh()},30000);
 setInterval(()=>{renderStatus();renderBoard()},60000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refresh()});
-if(game){$('#gate').hidden=true;refresh().then(()=>{if(game&&!myTeam()&&!isAdmin()&&teams)openJoin()})}else showGate();
+if(game){$('#gate').hidden=true;refresh(true).then(()=>{if(isAdmin())loadUsage();if(game&&!myTeam()&&!isAdmin()&&teams)openJoin()})}else showGate();
 }
 </script>
 </body>
