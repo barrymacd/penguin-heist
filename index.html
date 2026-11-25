@@ -102,6 +102,7 @@ label.f{display:grid;gap:6px;font-weight:700}
 @media(max-width:700px){.hero{grid-template-columns:1fr}.scene{min-height:240px}}
 @media(max-width:480px){.two{grid-template-columns:1fr}.row{grid-template-columns:28px minmax(0,1fr) auto;padding:10px 12px;gap:8px}.pts{font-size:24px}.prow{grid-template-columns:1fr 1fr}.prow span{grid-column:1/-1}}
 
+[hidden]{display:none!important}
 .gate{position:fixed;inset:0;z-index:20;background:linear-gradient(var(--sky1),var(--sky2));display:grid;place-items:center;padding:16px}
 .gate[hidden]{display:none}
 .gcard{background:var(--bg);border-radius:24px;padding:28px;width:min(420px,100%);display:grid;gap:14px;justify-items:start;box-shadow:0 10px 40px rgba(20,40,70,.15)}
@@ -220,7 +221,7 @@ label.f{display:grid;gap:6px;font-weight:700}
     <div id="plist"></div>
     <form class="addf" id="gpwForm" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="f" style="flex:1 1 200px">Change game password<input id="gpwNew" autocapitalize="none"></label><button class="btn small" type="submit">Save</button></form>
   </div>
-  <p class="note" style="margin-top:12px">Times use Central time. · v2.0 · <button class="linkbtn" id="ownerOpen">Game owner</button> · <button class="linkbtn" id="signOut">Sign this phone out</button></p>
+  <p class="note" style="margin-top:12px">Times use Central time. · v2.1 · <button class="linkbtn" id="ownerOpen">Game owner</button> · <button class="linkbtn" id="signOut">Sign this phone out</button></p>
 </div></section>
 
 <div class="ov" id="ov" role="dialog" aria-modal="true" aria-labelledby="logTitle">
